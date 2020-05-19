@@ -101,7 +101,7 @@ class TwitterBot:
         """
 
         # too big!
-        if len(long_tweet) > 1400:
+        if len(long_tweet) >= TWEET_MAX_LENGTH * 10:
             return 0, None
 
         handle = f"@{at} " if at else ""
@@ -121,7 +121,7 @@ class TwitterBot:
 
     def activate(self, sleep_interval=60):
         while True:
-            self._poll()
+            self.main_action()
             sleep(sleep_interval)
 
     @staticmethod
@@ -135,13 +135,12 @@ class TwitterBot:
         tweeted_at = tweet.created_at - timedelta(hours=5)  # twitter is ahead by 5 hours for me
         return tweeted_at > datetime.now() - timedelta(days=days)
 
-    def _poll(self):
+    def main_action(self):
         """
         The method that will be run when the bot is activated
         :return:
         """
         try:
-            print("polling!")
             pass  # TODO: implement your functionality here
         except TweepError as err:
             self.log_error(self._extract_tweepy_error(err))
