@@ -3,7 +3,11 @@
 from TwitterBot import TwitterBot
 from api_key import key
 
+
+def custom_function() -> None:
+    pass  # implement me
+
+
 if __name__ == "__main__":
     bot = TwitterBot(key)
-    bot.activate()
-    # implement bot.main_function(), it will execute when the bot is active!!
+    bot.activate(bot_function=custom_function)
