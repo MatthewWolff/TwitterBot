@@ -4,7 +4,8 @@ from TwitterBot import TwitterBot
 from api_key import key
 
 
-def custom_function() -> None:
+def custom_function(bot: TwitterBot) -> None:
+    bot.tweet("hello")
     pass  # implement me
 
 

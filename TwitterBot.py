@@ -1,5 +1,6 @@
 import sys
 from datetime import datetime, timedelta
+from inspect import signature
 from threading import Thread
 from time import sleep, strftime
 from typing import Callable, Dict, List, Tuple, Union
@@ -142,9 +143,23 @@ class TwitterBot:
             tweets = [first_tweet] + other_tweets
             return tweets
 
-    def activate(self, bot_function: Callable[[], None], sleep_interval: int = 60) -> None:
+    def activate(self, bot_function: Callable, sleep_interval: int = 60, pass_self: bool = True) -> None:
+        if pass_self:
+            sig = signature(bot_function)
+            types = [p.annotation for p in sig.parameters.values()]
+            if TwitterBot not in types:
+                raise ValueError("Error: the `bot_function` parameter must be a function handle for a function "
+                                 "that takes a `TwitterBot` as one of its inputs.\n\n"
+                                 "Make sure to explicitly add the type to it like this:\n"
+                                 "```\n"
+                                 "def custom_function(bot: TwitterBot):"
+                                 "\tpass\n"
+                                 "```\n"
+                                 ""
+                                 "Use `bot.activate(func, pass_self=False)` to avoid this error.")
+
         while True:
-            self._main_action(bot_function)
+            self._main_action(bot_function, pass_self)
             sleep(sleep_interval)
 
     @staticmethod
@@ -158,12 +173,12 @@ class TwitterBot:
         tweeted_at = tweet.created_at - timedelta(hours=5)  # twitter is ahead by 5 hours for me (CST)
         return tweeted_at > datetime.now() - timedelta(days=days)
 
-    def _main_action(self, bot_function: Callable[[], None]) -> None:
+    def _main_action(self, bot_function: Callable, pass_self: bool) -> None:
         """
         The method that will be run when the bot is activated
         """
         try:
-            bot_function()
+            bot_function(self) if pass_self else bot_function()
         except Exception as err:
             self.log_error(err)
             raise err
@@ -199,7 +214,7 @@ class TwitterBot:
                     )
 
             self.log(f"Tweeted: {' '.join(tweets)}")
-            return tweets[0] + ("" if len(tweets) is 1 else "... [continued]")
+            return tweets[0] + ("" if len(tweets) == 1 else "... [continued]")
 
     def log(self, activity) -> None:
         with open(self.log_file, "a") as l:
